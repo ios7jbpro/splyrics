@@ -4,7 +4,7 @@
 CONFIG_DIR="$HOME/.config/splyrics"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 CORE_DIR="$(dirname "${BASH_SOURCE[0]}")/core"
-INSTALLER_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/splyrics-installer.sh"
+INSTALLER_SCRIPT="splyrics-installer.sh"
 HELP_SCRIPT="${CORE_DIR}/splyrics-help.sh"
 CHECKER_COMPILER_SCRIPT="${CORE_DIR}/checker_compiler.sh"
 
