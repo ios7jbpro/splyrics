@@ -1,51 +1,49 @@
 #!/bin/bash
 
-# Function to check if a package exists and compile if necessary
-check_and_compile_package() {
-    local package_name="$1"
-    if ! command -v "$package_name" &> /dev/null || [[ "$force_compile" == "true" ]]; then
-        echo "$package_name not found or force compilation requested. Compiling..."
-        chmod +x "compilers/${package_name}compiler.sh"
-        ./compilers/"${package_name}compiler.sh"
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPILERS_DIR="$SCRIPT_DIR/../compilers"
+
+# Function to compile a specific package
+compile_package() {
+    local package_name=$1
+    if [ -f "$COMPILERS_DIR/${package_name}compiler.sh" ]; then
+        chmod +x "$COMPILERS_DIR/${package_name}compiler.sh"
+        "$COMPILERS_DIR/${package_name}compiler.sh"
     else
-        echo "$package_name already exists. Skipping compilation."
+        echo "Error: Compiler script for $package_name not found."
     fi
 }
 
-# Parse command line arguments
-force_compile=false
-packages=()
+# Function to compile all packages if --force flag is set
+compile_all_packages() {
+    local force_compile=$1
+    if [ "$force_compile" = "--force" ]; then
+        for compiler_script in "$COMPILERS_DIR"/*.sh; do
+            if [ -f "$compiler_script" ]; then
+                chmod +x "$compiler_script"
+                "$compiler_script"
+            fi
+        done
+    else
+        echo "Error: Unknown option or missing package."
+    fi
+}
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --force|-r )
-            force_compile=true
-            ;;
-        * )
-            packages+=("$1")
-            ;;
-    esac
-    shift
-done
-
-# Check and compile required packages
-for package in "${packages[@]}"; do
-    case $package in
-        "tmux" )
-            check_and_compile_package "tmux"
-            ;;
-        "sptlrx" )
-            check_and_compile_package "sptlrx"
-            ;;
-        "spotifycli" )
-            check_and_compile_package "spotifycli"
-            ;;
-        "cava" )
-            check_and_compile_package "cava"
-            ;;
-        * )
-            echo "Unknown package: $package"
-            exit 1
-            ;;
-    esac
-done
+# Main execution starts here
+force_compile=$1
+if [ -n "$force_compile" ]; then
+    compile_all_packages "$force_compile"
+else
+    echo "Checking and compiling necessary packages..."
+    # Modify this list as per your project's requirements
+    packages=("tmux" "sptlrx" "spotifycli" "cava")
+    for package in "${packages[@]}"; do
+        if ! command -v "$package" &> /dev/null; then
+            echo "$package not found. Compiling..."
+            compile_package "$package"
+        else
+            echo "$package already installed."
+        fi
+    done
+fi
