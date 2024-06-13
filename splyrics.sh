@@ -110,3 +110,4 @@ check_and_compile_packages "$force_compile"
 # Execute splyrics-main.sh passing individual flags
 chmod +x "$CORE_DIR/$SP_MAIN_SCRIPT"
 "$CORE_DIR/$SP_MAIN_SCRIPT" "$enable_cava" "$enable_sptlrx" "$enable_song_info"
+
