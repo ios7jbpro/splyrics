@@ -31,6 +31,7 @@ After installation(DO NOT QUIT THE CLONED DIRECTORY YET), run `splyrics`. It wil
 -i    Install the script systemwide
 -s    Enable the cava tmux panel(the visualiser)
 -l    Enable the sptlrx panel(lyrics panel)
+-i    Display song information instead of spotifycli
 -e    Open the config editor
 ```
 
