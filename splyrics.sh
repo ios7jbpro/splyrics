@@ -7,7 +7,7 @@ show_help() {
     echo "SpLyrics"
     echo "A bundled script that displays stuff about Spotify"
     echo ""
-    echo "Usage: $0 [-h] [-s] [-l] [-i] [-e] [-r]"
+    echo "Usage: $0 [-h] [-s] [-l] [-i] [-e] [-r] [-w]"
     echo ""
     echo "Options:"
     echo "  -h      Show this help message"
@@ -16,6 +16,7 @@ show_help() {
     echo "  -i      Install (or update if already installed) the script system-wide"
     echo "  -e      Edit the config file"
     echo "  -r      Recompile the packages even if they already exist (no script execution)"
+    echo "  -w      Display song information instead of spotifycli in the top-right panel"
 }
 
 create_config() {
@@ -51,10 +52,11 @@ check_sptlrx_cookie() {
 
 enable_sptlrx=false
 enable_cava=false
+enable_song_info=false
 install_systemwide=false
 recompile_packages=false
 
-while getopts "hslier" opt; do
+while getopts "hsliwer" opt; do
     case ${opt} in
         h )
             show_help
@@ -76,6 +78,9 @@ while getopts "hslier" opt; do
             ;;
         r )
             recompile_packages=true
+            ;;
+        w )
+            enable_song_info=true
             ;;
         \? )
             show_help
@@ -143,8 +148,12 @@ if $enable_sptlrx; then
     tmux split-window -h -t "$session_name"
 fi
 
-tmux send-keys -t "$session_name" "clear && spotifycli" C-m
-tmux send-keys -t "$session_name" "play" C-m
+if $enable_song_info; then
+    tmux send-keys -t "$session_name" "watch -t -n 1 \"echo Song: && spotifycli --statusposition && echo Album: && spotifycli --album && echo Artist: && spotifycli --artist\"" C-m
+else
+    tmux send-keys -t "$session_name" "clear && spotifycli" C-m
+    tmux send-keys -t "$session_name" "play" C-m
+fi
 
 spotifycli_pane=$(tmux display-message -p -t "$session_name:0.1" "#{pane_id}")
 
