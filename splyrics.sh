@@ -52,6 +52,9 @@ update_splyrics() {
 install_systemwide=false
 force_compile=false
 update=false
+enable_cava=false
+enable_sptlrx=false
+enable_song_info=false
 
 while getopts "hsliweru" opt; do
     case ${opt} in
@@ -104,6 +107,6 @@ fi
 
 check_and_compile_packages "$force_compile"
 
-# Execute splyrics-main.sh passing all flags and options
+# Execute splyrics-main.sh passing individual flags
 chmod +x "$CORE_DIR/$SP_MAIN_SCRIPT"
 "$CORE_DIR/$SP_MAIN_SCRIPT" "$enable_cava" "$enable_sptlrx" "$enable_song_info"
