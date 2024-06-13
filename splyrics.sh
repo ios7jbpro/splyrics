@@ -5,13 +5,13 @@ CONFIG_DIR="$HOME/.config/splyrics"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 CORE_DIR="$(dirname "${BASH_SOURCE[0]}")/core"
 INSTALLER_SCRIPT="splyrics-installer.sh"
-HELP_SCRIPT="${CORE_DIR}/splyrics-help.sh"
+HELP_SCRIPT="splyrics-help.sh"
 CHECKER_COMPILER_SCRIPT="${CORE_DIR}/checker_compiler.sh"
 
 # Function to display help using splyrics-help.sh
 show_help() {
     chmod +x "$HELP_SCRIPT"
-    "$HELP_SCRIPT"
+    "./$HELP_SCRIPT"
 }
 
 # Function to create initial configuration
@@ -47,6 +47,7 @@ update_splyrics() {
     git clone https://github.com/ios7jbpro/splyrics /tmp/splyrics_temp
     rsync -a /tmp/splyrics_temp/ "$(dirname "${BASH_SOURCE[0]}")/" --exclude=splyrics
     rm -rf /tmp/splyrics_temp
+    chmod +x "$(dirname "${BASH_SOURCE[0]}")/splyrics.sh"
     echo "SpLyrics updated successfully."
     exit 0
 }
