@@ -25,7 +25,7 @@ create_config() {
         cat <<EOF > "$CONFIG_FILE"
 {
     "defaults": "-sl",
-    "sptlrx": "--current 'bold' --before '104,faint,italic' --after '104,faint'"
+    "sptlrx": "--current 'bold' --before '0,0,0,italic' --after '50,faint'"
 }
 EOF
     fi
