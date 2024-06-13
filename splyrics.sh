@@ -1,10 +1,13 @@
 #!/bin/bash
 
+CONFIG_DIR="$HOME/.config/splyrics"
+CONFIG_FILE="$CONFIG_DIR/config.json"
+
 show_help() {
     echo "SpLyrics"
     echo "A bundled script that displays stuff about Spotify"
     echo ""
-    echo "Usage: $0 [-h] [-s] [-c] [-l] [-i]"
+    echo "Usage: $0 [-h] [-s] [-c] [-l] [-i] [-e] [-r]"
     echo ""
     echo "Options:"
     echo "  -h    Show this help message"
@@ -12,16 +15,47 @@ show_help() {
     echo "  -c    Enable the echoing credits"
     echo "  -l    Enable the sptlrx panel"
     echo "  -i    Install (or update if already installed) the script system-wide"
+    echo "  -e    Edit the config file"
+    echo "  -r    Recompile the packages even if they already exist"
 }
 
-# Default values for flags
+create_config() {
+    mkdir -p "$CONFIG_DIR"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        cat <<EOF > "$CONFIG_FILE"
+{
+    "defaults": "-sl",
+    "sptlrx": "--current 'bold' --before '104,faint,italic' --after '104,faint'"
+}
+EOF
+    fi
+}
+
+compile_package() {
+    local package_name=$1
+    chmod +x "${package_name}compiler.sh"
+    ./"${package_name}compiler.sh"
+}
+
+check_sptlrx() {
+    local config_file=$1
+    local has_cookie=$(jq -r '.sptlrx | contains("--cookie")' "$config_file")
+    if [ "$has_cookie" != "true" ]; then
+        echo "Error: --cookie option is required in the sptlrx section of $CONFIG_FILE"
+        echo "Running checksptlrx.sh to handle this issue..."
+        chmod +x checksptlrx.sh  # Ensure checksptlrx.sh is executable
+        ./checksptlrx.sh
+        exit 1
+    fi
+}
+
 enable_sptlrx=false
 enable_cava=false
 enable_credits=false
 install_systemwide=false
+recompile_packages=false
 
-# Parse command line options
-while getopts "hscli" opt; do
+while getopts "hsclier" opt; do
     case ${opt} in
         h )
             show_help
@@ -39,6 +73,14 @@ while getopts "hscli" opt; do
         i )
             install_systemwide=true
             ;;
+        e )
+            create_config
+            ${EDITOR:-nano} "$CONFIG_FILE"
+            exit 0
+            ;;
+        r )
+            recompile_packages=true
+            ;;
         \? )
             show_help
             exit 1
@@ -46,55 +88,62 @@ while getopts "hscli" opt; do
     esac
 done
 
+if [ -f "$CONFIG_FILE" ]; then
+    config_defaults=$(jq -r '.defaults' "$CONFIG_FILE")
+    config_sptlrx=$(jq -r '.sptlrx' "$CONFIG_FILE")
+    check_sptlrx "$CONFIG_FILE"
+else
+    echo "Error: Config file $CONFIG_FILE not found."
+    exit 1
+fi
+
+if [ $OPTIND -eq 1 ]; then
+    for flag in $(echo $config_defaults | sed -e 's/./& /g'); do
+        case "$flag" in
+            s ) enable_cava=true ;;
+            c ) enable_credits=true ;;
+            l ) enable_sptlrx=true ;;
+        esac
+    done
+fi
+
 if $install_systemwide; then
-    # Get the current script path
     script_path=$(realpath "$0")
-    # Copy the script to /usr/local/bin
     sudo cp "$script_path" /usr/local/bin/splyrics
     sudo chmod +x /usr/local/bin/splyrics
     echo "SpLyrics installed (or updated) successfully. You can now run the script using 'splyrics'."
     exit 0
 fi
 
-# Check if tmux is installed
-if ! command -v tmux &> /dev/null; then
-    echo "tmux could not be found. Please install it first."
-    exit 1
+if ! command -v tmux &> /dev/null || $recompile_packages; then
+    echo "tmux could not be found or recompilation requested. Trying to compile it..."
+    compile_package "tmux"
 fi
 
-# Check if sptlrx is installed if the flag is set
-if $enable_sptlrx && ! command -v sptlrx &> /dev/null; then
-    echo "sptlrx could not be found. Please install it first."
-    exit 1
+if $enable_sptlrx && (! command -v sptlrx &> /dev/null || $recompile_packages); then
+    echo "sptlrx could not be found or recompilation requested. Trying to compile it..."
+    compile_package "sptlrx"
 fi
 
-# Check if spotifycli is installed
-if ! command -v spotifycli &> /dev/null; then
-    echo "spotifycli could not be found. Please install it first."
-    exit 1
+if ! command -v spotifycli &> /dev/null || $recompile_packages; then
+    echo "spotifycli could not be found or recompilation requested. Trying to compile it..."
+    compile_package "spotifycli"
 fi
 
-# Check if cava is installed if the flag is set
-if $enable_cava && ! command -v cava &> /dev/null; then
-    echo "cava could not be found. Please install it first."
-    exit 1
+if $enable_cava && (! command -v cava &> /dev/null || $recompile_packages); then
+    echo "cava could not be found or recompilation requested. Trying to compile it..."
+    compile_package "cava"
 fi
 
-# Generate a unique session name using the current timestamp
 session_name="splyrics_$(date +%s)"
-
-# Start a new tmux session with a unique name
 tmux new-session -d -s "$session_name"
 
-# Conditionally run the sptlrx command in the first (left) panel
 if $enable_sptlrx; then
-    tmux send-keys -t "$session_name" "sptlrx --current 'bold' --before '104,faint,italic' --after '104,faint'" C-m
+    tmux send-keys -t "$session_name" "sptlrx $config_sptlrx" C-m
 fi
 
-# Split the window vertically
 tmux split-window -h -t "$session_name"
 
-# Conditionally echo the Portal-themed message and run spotifycli in the second (top right) panel
 if $enable_credits; then
     tmux send-keys -t "$session_name" "echo '---1984 Aperture Science Labs---'" C-m
     tmux send-keys -t "$session_name" "echo '>Connecting to spotifycli'" C-m
@@ -107,22 +156,17 @@ fi
 tmux send-keys -t "$session_name" "spotifycli" C-m
 tmux send-keys -t "$session_name" "play" C-m
 
-# Get the pane ID for the spotifycli pane
 spotifycli_pane=$(tmux display-message -p -t "$session_name:0.1" "#{pane_id}")
 
-# Conditionally split the right pane horizontally and run cava in the third (bottom right) panel
 if $enable_cava; then
     tmux split-window -v -t "$spotifycli_pane"
     tmux send-keys -t "$session_name" "cava" C-m
 fi
 
-# Focus on the spotifycli pane
 tmux select-pane -t "$spotifycli_pane"
 
-# Set up the synchronization to kill the session if any pane is closed
 tmux set-option -t "$session_name" remain-on-exit on
 tmux set-option -t "$session_name" destroy-unattached off
 tmux set-hook -t "$session_name" pane-died "run-shell 'tmux kill-session -t \"$session_name\"'"
 
-# Attach to the tmux session
 tmux attach -t "$session_name"
