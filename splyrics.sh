@@ -119,27 +119,7 @@ if $install_systemwide; then
     exit 0
 fi
 
-run_checker_compiler() {
-    local packages=()
-    if $enable_sptlrx && (! command -v sptlrx &> /dev/null || $recompile_packages); then
-        packages+=("sptlrx")
-    fi
-    if ! command -v spotifycli &> /dev/null || $recompile_packages; then
-        packages+=("spotifycli")
-    fi
-    if ! command -v tmux &> /dev/null || $recompile_packages; then
-        packages+=("tmux")
-    fi
-    if $enable_cava && (! command -v cava &> /dev/null || $recompile_packages); then
-        packages+=("cava")
-    fi
-    
-    if [ ${#packages[@]} -gt 0 ]; then
-        chmod +x core/checker_compiler.sh
-        ./core/checker_compiler.sh --force "${packages[@]}"
-    fi
-}
-
+run_checker_compiler
 
 
 if [ -f "$CONFIG_FILE" ]; then
