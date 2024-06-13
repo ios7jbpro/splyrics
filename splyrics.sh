@@ -110,63 +110,15 @@ check_and_compile_packages "$force_compile"
 # Continue with the rest of your script logic...
 # Replace or add any necessary functionality here based on your requirements.
 
-
-# Handle script installation system-wide
-if $install_systemwide; then
-    chmod +x "$INSTALLER_SCRIPT"
-    "$INSTALLER_SCRIPT"
-    exit 0
-fi
-
-# Check for required dependencies or recompile if requested
-if ! command -v tmux &> /dev/null || $recompile_packages; then
-    echo "tmux could not be found or recompilation requested. Trying to compile it..."
-    compile_packages "$recompile_packages"
-fi
-
-if $enable_sptlrx && (! command -v sptlrx &> /dev/null || $recompile_packages); then
-    echo "sptlrx could not be found or recompilation requested. Trying to compile it..."
-    compile_packages "$recompile_packages"
-fi
-
-if ! command -v spotifycli &> /dev/null || $recompile_packages; then
-    echo "spotifycli could not be found or recompilation requested. Trying to compile it..."
-    compile_packages "$recompile_packages"
-fi
-
-if $enable_cava && (! command -v cava &> /dev/null || $recompile_packages); then
-    echo "cava could not be found or recompilation requested. Trying to compile it..."
-    compile_packages "$recompile_packages"
-fi
-
-# Handle recompilation of packages
-if $recompile_packages; then
-    echo "Packages recompiled successfully. Use the appropriate flags to run the script."
-    exit 0
-fi
-
-# Load configuration from file
-if [ -f "$CONFIG_FILE" ]; then
-    config_defaults=$(jq -r '.defaults' "$CONFIG_FILE")
-    config_sptlrx=$(jq -r '.sptlrx' "$CONFIG_FILE")
-    sptlrx_cookie=$(jq -r '.["sptlrx-cookie"]' "$CONFIG_FILE")
-    check_sptlrx_cookie "$CONFIG_FILE"
-else
-    echo "Error: Config file $CONFIG_FILE not found."
-    exit 1
-fi
-
-# Set up tmux session
+# Example tmux session initialization (replace with your actual logic)
 session_name="splyrics_$(date +%s)"
 tmux new-session -d -s "$session_name"
 
-# Enable sptlrx panel if requested
 if $enable_sptlrx; then
     tmux send-keys -t "$session_name" "clear && sptlrx $config_sptlrx $sptlrx_cookie" C-m
     tmux split-window -h -t "$session_name"
 fi
 
-# Enable song information panel if requested
 if $enable_song_info; then
     tmux send-keys -t "$session_name" "watch -t -n 1 \"echo Song: && spotifycli --statusposition && echo Album: && spotifycli --album && echo Artist: && spotifycli --artist\"" C-m
     tmux split-window -v -t "$session_name:0.1"
@@ -177,10 +129,8 @@ else
     tmux select-pane -t "$session_name:0.1"
 fi
 
-# Determine Spotify CLI pane ID for later use
 spotifycli_pane=$(tmux display-message -p -t "$session_name:0.1" "#{pane_id}")
 
-# Enable cava panel if requested
 if $enable_cava; then
     if $enable_song_info; then
         tmux split-window -v -t "$session_name:0.2"
@@ -197,18 +147,8 @@ else
     tmux select-pane -t "$spotifycli_pane"
 fi
 
-# Configure tmux session options
 tmux set-option -t "$session_name" remain-on-exit on
 tmux set-option -t "$session_name" destroy-unattached off
 tmux set-hook -t "$session_name" pane-died "run-shell 'tmux kill-session -t \"$session_name\"'"
 
-# Attach to tmux session
 tmux attach -t "$session_name"
-
-# Handle script update from GitHub repository
-if $update_script; then
-    echo "Updating script from GitHub..."
-    git clone --depth=1 "$GITHUB_REPO" "$SCRIPT_DIR"
-    echo "Update complete. Please restart the script."
-    exit 0
-fi
