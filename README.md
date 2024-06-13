@@ -16,7 +16,6 @@ You OBVIOUSLY need a Spotify premium account to use this.
 ## Example usage
 ```
 splyrics -sl
-^ (if the packages that are required by the flags are not installed, script will error out.)
 ```
 
 ## Dependencies
