@@ -1,6 +1,9 @@
 # splyrics
 A bundled script that displays controls for Spotify alongside eyecandy
 
+## Disclaimer
+You OBVIOUSLY need a Spotify premium account to use this.
+
 ## Options
 -h    Shows the help message
 -i    Install the script systemwide
