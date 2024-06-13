@@ -136,9 +136,10 @@ run_checker_compiler() {
     
     if [ ${#packages[@]} -gt 0 ]; then
         chmod +x core/checker_compiler.sh
-        ./core/checker_compiler.sh "${packages[@]}"
+        ./core/checker_compiler.sh --force "${packages[@]}"
     fi
 }
+
 
 
 if [ -f "$CONFIG_FILE" ]; then
