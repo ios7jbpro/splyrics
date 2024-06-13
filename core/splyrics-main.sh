@@ -1,6 +1,17 @@
 #!/bin/bash
 
-# Function to create tmux panes based on flags
+# Source the config file to get the values
+CONFIG_FILE="$HOME/.config/splyrics/config.json"
+if [ -f "$CONFIG_FILE" ]; then
+    config_defaults=$(jq -r '.defaults' "$CONFIG_FILE")
+    config_sptlrx=$(jq -r '.sptlrx' "$CONFIG_FILE")
+    sptlrx_cookie=$(jq -r '.["sptlrx-cookie"]' "$CONFIG_FILE")
+else
+    echo "Error: Config file $CONFIG_FILE not found."
+    exit 1
+fi
+
+# Function to create tmux panes based on flags and config values
 create_tmux_panes() {
     local enable_cava="$1"
     local enable_sptlrx="$2"
