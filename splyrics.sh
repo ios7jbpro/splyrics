@@ -7,16 +7,15 @@ show_help() {
     echo "SpLyrics"
     echo "A bundled script that displays stuff about Spotify"
     echo ""
-    echo "Usage: $0 [-h] [-s] [-c] [-l] [-i] [-e] [-r]"
+    echo "Usage: $0 [-h] [-s] [-l] [-i] [-e] [-r]"
     echo ""
     echo "Options:"
-    echo "  -h    Show this help message"
-    echo "  -s    Enable the cava tmux panel"
-    echo "  -c    Enable the echoing credits"
-    echo "  -l    Enable the sptlrx panel"
-    echo "  -i    Install (or update if already installed) the script system-wide"
-    echo "  -e    Edit the config file"
-    echo "  -r    Recompile the packages even if they already exist (no script execution)"
+    echo "  -h      Show this help message"
+    echo "  -s      Enable the cava tmux panel (right-bottom)"
+    echo "  -l      Enable the sptlrx panel (left)"
+    echo "  -i      Install (or update if already installed) the script system-wide"
+    echo "  -e      Edit the config file"
+    echo "  -r      Recompile the packages even if they already exist (no script execution)"
 }
 
 create_config() {
@@ -25,7 +24,8 @@ create_config() {
         cat <<EOF > "$CONFIG_FILE"
 {
     "defaults": "-sl",
-    "sptlrx": "--current 'bold' --before '0,0,0,italic' --after '50,faint'"
+    "sptlrx": "--current 'bold' --before '0,0,0,italic' --after '50,faint'",
+    "sptlrx-cookie": ""
 }
 EOF
     fi
@@ -37,10 +37,10 @@ compile_package() {
     ./"${package_name}compiler.sh"
 }
 
-check_sptlrx() {
+check_sptlrx_cookie() {
     local config_file=$1
-    local has_cookie=$(jq -r '.sptlrx | contains("--cookie")' "$config_file")
-    if [ "$has_cookie" != "true" ]; then
+    local sptlrx_cookie=$(jq -r '.["sptlrx-cookie"]' "$config_file")
+    if [ -z "$sptlrx_cookie" ]; then
         echo "Error: --cookie option is required in the sptlrx section of $CONFIG_FILE"
         echo "Running checksptlrx.sh to handle this issue..."
         chmod +x checksptlrx.sh  # Ensure checksptlrx.sh is executable
@@ -51,11 +51,10 @@ check_sptlrx() {
 
 enable_sptlrx=false
 enable_cava=false
-enable_credits=false
 install_systemwide=false
 recompile_packages=false
 
-while getopts "hsclier" opt; do
+while getopts "hslier" opt; do
     case ${opt} in
         h )
             show_help
@@ -63,9 +62,6 @@ while getopts "hsclier" opt; do
             ;;
         s )
             enable_cava=true
-            ;;
-        c )
-            enable_credits=true
             ;;
         l )
             enable_sptlrx=true
@@ -124,7 +120,7 @@ fi
 if [ -f "$CONFIG_FILE" ]; then
     config_defaults=$(jq -r '.defaults' "$CONFIG_FILE")
     config_sptlrx=$(jq -r '.sptlrx' "$CONFIG_FILE")
-    check_sptlrx "$CONFIG_FILE"
+    check_sptlrx_cookie "$CONFIG_FILE"
 else
     echo "Error: Config file $CONFIG_FILE not found."
     exit 1
@@ -134,7 +130,6 @@ if [ $OPTIND -eq 1 ]; then
     for flag in $(echo $config_defaults | sed -e 's/./& /g'); do
         case "$flag" in
             s ) enable_cava=true ;;
-            c ) enable_credits=true ;;
             l ) enable_sptlrx=true ;;
         esac
     done
@@ -144,28 +139,18 @@ session_name="splyrics_$(date +%s)"
 tmux new-session -d -s "$session_name"
 
 if $enable_sptlrx; then
-    tmux send-keys -t "$session_name" "sptlrx $config_sptlrx" C-m
+    tmux send-keys -t "$session_name" "clear && sptlrx $config_sptlrx $sptlrx_cookie" C-m
+    tmux split-window -h -t "$session_name"
 fi
 
-tmux split-window -h -t "$session_name"
-
-if $enable_credits; then
-    tmux send-keys -t "$session_name" "echo '---1984 Aperture Science Labs---'" C-m
-    tmux send-keys -t "$session_name" "echo '>Connecting to spotifycli'" C-m
-    tmux send-keys -t "$session_name" "sleep 1" C-m
-    tmux send-keys -t "$session_name" "echo '>Connected'" C-m
-    tmux send-keys -t "$session_name" "sleep 1" C-m
-    tmux send-keys -t "$session_name" "echo '>Playing the end credits.'" C-m
-    tmux send-keys -t "$session_name" "sleep 1" C-m
-fi
-tmux send-keys -t "$session_name" "spotifycli" C-m
+tmux send-keys -t "$session_name" "clear && spotifycli" C-m
 tmux send-keys -t "$session_name" "play" C-m
 
 spotifycli_pane=$(tmux display-message -p -t "$session_name:0.1" "#{pane_id}")
 
 if $enable_cava; then
     tmux split-window -v -t "$spotifycli_pane"
-    tmux send-keys -t "$session_name" "cava" C-m
+    tmux send-keys -t "$session_name" "clear && cava" C-m
 fi
 
 tmux select-pane -t "$spotifycli_pane"
