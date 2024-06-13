@@ -11,6 +11,7 @@ You OBVIOUSLY need a Spotify premium account to use this.
 -s    Enable the cava tmux panel(the visualiser)
 -c    Enable the echoing credits(easter egg, portal 1 styled credits)
 -l    Enable the sptlrx panel(lyrics panel)
+-e    Open the config editor
 ```
 
 ## Example usage
