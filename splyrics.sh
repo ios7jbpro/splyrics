@@ -1,22 +1,17 @@
 #!/bin/bash
 
+# Define script version
+SCRIPT_VERSION="1.0"
+
+# GitHub repository URL for updates
+REPO_URL="https://github.com/ios7jbpro/splyrics"
+
 CONFIG_DIR="$HOME/.config/splyrics"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 
 show_help() {
-    echo "SpLyrics"
-    echo "A bundled script that displays stuff about Spotify"
-    echo ""
-    echo "Usage: $0 [-h] [-s] [-l] [-i] [-e] [-r] [-w]"
-    echo ""
-    echo "Options:"
-    echo "  -h      Show this help message"
-    echo "  -s      Enable the cava tmux panel (right-bottom)"
-    echo "  -l      Enable the sptlrx panel (left)"
-    echo "  -i      Install (or update if already installed) the script system-wide"
-    echo "  -e      Edit the config file"
-    echo "  -r      Recompile the packages even if they already exist (no script execution)"
-    echo "  -w      Display song information instead of spotifycli in the top-right panel"
+    chmod +x core/splyrics-help.sh
+    ./core/splyrics-help.sh
 }
 
 create_config() {
@@ -32,10 +27,13 @@ EOF
     fi
 }
 
-compile_package() {
-    local package_name=$1
-    chmod +x "${package_name}compiler.sh"
-    ./"${package_name}compiler.sh"
+run_checker_compiler() {
+    local force_flag=""
+    if $recompile_packages; then
+        force_flag="--force"
+    fi
+    chmod +x core/checker_compiler.sh  # Ensure checker_compiler.sh is executable
+    ./core/checker_compiler.sh $force_flag
 }
 
 check_sptlrx_cookie() {
@@ -50,13 +48,30 @@ check_sptlrx_cookie() {
     fi
 }
 
+update_script() {
+    echo "Updating script from $REPO_URL..."
+    # Clone the repository to a temporary directory
+    tmp_dir=$(mktemp -d)
+    git clone "$REPO_URL" "$tmp_dir"
+    
+    # Copy new script and files from the cloned repository
+    cp -rf "$tmp_dir"/* ./
+    
+    # Clean up temporary directory
+    rm -rf "$tmp_dir"
+    
+    echo "Script updated successfully!"
+    exit 0
+}
+
 enable_sptlrx=false
 enable_cava=false
 enable_song_info=false
 install_systemwide=false
 recompile_packages=false
+do_update=false
 
-while getopts "hsliwer" opt; do
+while getopts "hsliweru" opt; do
     case ${opt} in
         h )
             show_help
@@ -78,9 +93,14 @@ while getopts "hsliwer" opt; do
             ;;
         r )
             recompile_packages=true
+            run_checker_compiler
+            exit 0
             ;;
         w )
             enable_song_info=true
+            ;;
+        u )
+            do_update=true
             ;;
         \? )
             show_help
@@ -89,42 +109,22 @@ while getopts "hsliwer" opt; do
     esac
 done
 
+if $do_update; then
+    update_script
+fi
+
 if $install_systemwide; then
-    script_path=$(realpath "$0")
-    sudo cp "$script_path" /usr/local/bin/splyrics
-    sudo chmod +x /usr/local/bin/splyrics
-    echo "SpLyrics installed (or updated) successfully. You can now run the script using 'splyrics'."
+    chmod +x splyrics-installer.sh
+    ./splyrics-installer.sh
     exit 0
 fi
 
-if ! command -v tmux &> /dev/null || $recompile_packages; then
-    echo "tmux could not be found or recompilation requested. Trying to compile it..."
-    compile_package "tmux"
-fi
-
-if $enable_sptlrx && (! command -v sptlrx &> /dev/null || $recompile_packages); then
-    echo "sptlrx could not be found or recompilation requested. Trying to compile it..."
-    compile_package "sptlrx"
-fi
-
-if ! command -v spotifycli &> /dev/null || $recompile_packages; then
-    echo "spotifycli could not be found or recompilation requested. Trying to compile it..."
-    compile_package "spotifycli"
-fi
-
-if $enable_cava && (! command -v cava &> /dev/null || $recompile_packages); then
-    echo "cava could not be found or recompilation requested. Trying to compile it..."
-    compile_package "cava"
-fi
-
-if $recompile_packages; then
-    echo "Packages recompiled successfully. Use the appropriate flags to run the script."
-    exit 0
-fi
+run_checker_compiler
 
 if [ -f "$CONFIG_FILE" ]; then
     config_defaults=$(jq -r '.defaults' "$CONFIG_FILE")
     config_sptlrx=$(jq -r '.sptlrx' "$CONFIG_FILE")
+    sptlrx_cookie=$(jq -r '.["sptlrx-cookie"]' "$CONFIG_FILE")
     check_sptlrx_cookie "$CONFIG_FILE"
 else
     echo "Error: Config file $CONFIG_FILE not found."
@@ -150,19 +150,31 @@ fi
 
 if $enable_song_info; then
     tmux send-keys -t "$session_name" "watch -t -n 1 \"echo Song: && spotifycli --statusposition && echo Album: && spotifycli --album && echo Artist: && spotifycli --artist\"" C-m
+    tmux split-window -v -t "$session_name:0.1"
+    tmux send-keys -t "$session_name" "clear && spotifycli" C-m
+    tmux select-pane -t "$session_name:0.2"
 else
     tmux send-keys -t "$session_name" "clear && spotifycli" C-m
-    tmux send-keys -t "$session_name" "play" C-m
+    tmux select-pane -t "$session_name:0.1"
 fi
 
 spotifycli_pane=$(tmux display-message -p -t "$session_name:0.1" "#{pane_id}")
 
 if $enable_cava; then
-    tmux split-window -v -t "$spotifycli_pane"
+    if $enable_song_info; then
+        tmux split-window -v -t "$session_name:0.2"
+    else
+        tmux split-window -v -t "$session_name:0.1"
+    fi
     tmux send-keys -t "$session_name" "clear && cava" C-m
 fi
 
-tmux select-pane -t "$spotifycli_pane"
+# Ensure the new spotifycli pane is selected when -w is passed
+if $enable_song_info; then
+    tmux select-pane -t "$session_name:0.2"
+else
+    tmux select-pane -t "$spotifycli_pane"
+fi
 
 tmux set-option -t "$session_name" remain-on-exit on
 tmux set-option -t "$session_name" destroy-unattached off
