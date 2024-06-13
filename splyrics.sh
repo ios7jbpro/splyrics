@@ -1,24 +1,20 @@
 #!/bin/bash
 
 # Configuration
-CONFIG_DIR="$HOME/.config/splyrics"
-CONFIG_FILE="$CONFIG_DIR/config.json"
 CORE_DIR="$(dirname "${BASH_SOURCE[0]}")/core"
-INSTALLER_SCRIPT="splyrics-installer.sh"
-HELP_SCRIPT="splyrics-help.sh"
-CHECKER_COMPILER_SCRIPT="${CORE_DIR}/checker_compiler.sh"
+SP_MAIN_SCRIPT="splyrics-main.sh"
 
 # Function to display help using splyrics-help.sh
 show_help() {
-    chmod +x "$HELP_SCRIPT"
-    "./$HELP_SCRIPT"
+    chmod +x "$CORE_DIR/splyrics-help.sh"
+    "./$CORE_DIR/splyrics-help.sh"
 }
 
 # Function to create initial configuration
 create_config() {
-    mkdir -p "$CONFIG_DIR"
-    if [ ! -f "$CONFIG_FILE" ]; then
-        cat <<EOF > "$CONFIG_FILE"
+    mkdir -p "$HOME/.config/splyrics"
+    if [ ! -f "$HOME/.config/splyrics/config.json" ]; then
+        cat <<EOF > "$HOME/.config/splyrics/config.json"
 {
     "defaults": "-sl",
     "sptlrx": "--current 'bold' --before '0,0,0,italic' --after '50,faint'",
@@ -30,15 +26,15 @@ EOF
 
 # Function to install splyrics system-wide using splyrics-installer.sh
 install_systemwide() {
-    chmod +x "$INSTALLER_SCRIPT"
-    sudo "./$INSTALLER_SCRIPT"
+    chmod +x "$CORE_DIR/splyrics-installer.sh"
+    sudo "./$CORE_DIR/splyrics-installer.sh"
     exit 0
 }
 
 # Function to check and compile packages using checker_compiler.sh
 check_and_compile_packages() {
-    chmod +x "$CHECKER_COMPILER_SCRIPT"
-    "$CHECKER_COMPILER_SCRIPT" "$1"
+    chmod +x "$CORE_DIR/checker_compiler.sh"
+    "$CORE_DIR/checker_compiler.sh" "$1"
 }
 
 # Function to handle updates by cloning from GitHub
@@ -74,7 +70,7 @@ while getopts "hsliweru" opt; do
             ;;
         e )
             create_config
-            ${EDITOR:-nano} "$CONFIG_FILE"
+            ${EDITOR:-nano} "$HOME/.config/splyrics/config.json"
             exit 0
             ;;
         r )
@@ -101,55 +97,13 @@ if $install_systemwide; then
     install_systemwide
 fi
 
-if [ ! -f "$CONFIG_FILE" ]; then
-    echo "Error: Config file $CONFIG_FILE not found."
+if [ ! -f "$HOME/.config/splyrics/config.json" ]; then
+    echo "Error: Config file $HOME/.config/splyrics/config.json not found."
     exit 1
 fi
 
 check_and_compile_packages "$force_compile"
 
-# Continue with the rest of your script logic...
-# Replace or add any necessary functionality here based on your requirements.
-
-# Example tmux session initialization (replace with your actual logic)
-session_name="splyrics_$(date +%s)"
-tmux new-session -d -s "$session_name"
-
-if $enable_sptlrx; then
-    tmux send-keys -t "$session_name" "clear && sptlrx $config_sptlrx $sptlrx_cookie" C-m
-    tmux split-window -h -t "$session_name"
-fi
-
-if $enable_song_info; then
-    tmux send-keys -t "$session_name" "watch -t -n 1 \"echo Song: && spotifycli --statusposition && echo Album: && spotifycli --album && echo Artist: && spotifycli --artist\"" C-m
-    tmux split-window -v -t "$session_name:0.1"
-    tmux send-keys -t "$session_name" "clear && spotifycli" C-m
-    tmux select-pane -t "$session_name:0.2"
-else
-    tmux send-keys -t "$session_name" "clear && spotifycli" C-m
-    tmux select-pane -t "$session_name:0.1"
-fi
-
-spotifycli_pane=$(tmux display-message -p -t "$session_name:0.1" "#{pane_id}")
-
-if $enable_cava; then
-    if $enable_song_info; then
-        tmux split-window -v -t "$session_name:0.2"
-    else
-        tmux split-window -v -t "$session_name:0.1"
-    fi
-    tmux send-keys -t "$session_name" "clear && cava" C-m
-fi
-
-# Ensure the new spotifycli pane is selected when -w is passed
-if $enable_song_info; then
-    tmux select-pane -t "$session_name:0.2"
-else
-    tmux select-pane -t "$spotifycli_pane"
-fi
-
-tmux set-option -t "$session_name" remain-on-exit on
-tmux set-option -t "$session_name" destroy-unattached off
-tmux set-hook -t "$session_name" pane-died "run-shell 'tmux kill-session -t \"$session_name\"'"
-
-tmux attach -t "$session_name"
+# Execute splyrics-main.sh passing all flags and options
+chmod +x "$CORE_DIR/$SP_MAIN_SCRIPT"
+"$CORE_DIR/$SP_MAIN_SCRIPT" "$enable_cava" "$enable_sptlrx" "$enable_song_info"
