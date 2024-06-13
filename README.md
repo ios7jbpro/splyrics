@@ -11,6 +11,8 @@ https://github.com/pwittchen/spotify-cli-linux
 
 https://github.com/raitonoberu/sptlrx
 
+The dependencies should be automatically installed upon the first launch if they are missing.
+
 ## Installation
 ```
 git clone https://github.com/ios7jbpro/splyrics
