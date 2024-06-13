@@ -1,15 +1,12 @@
 #!/bin/bash
 
-# Configuration variables
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Configuration
 CONFIG_DIR="$HOME/.config/splyrics"
 CONFIG_FILE="$CONFIG_DIR/config.json"
-INSTALL_DIR="/usr/local/bin"
-MAIN_SCRIPT="splyrics.sh"
-INSTALLER_SCRIPT="splyrics-installer.sh"
-HELP_SCRIPT="$SCRIPT_DIR/core/splyrics-help.sh"
-COMPILER_SCRIPT="$SCRIPT_DIR/core/checker_compiler.sh"
-GITHUB_REPO="https://github.com/ios7jbpro/splyrics"
+CORE_DIR="$(dirname "${BASH_SOURCE[0]}")/core"
+INSTALLER_SCRIPT="${CORE_DIR}/splyrics-installer.sh"
+HELP_SCRIPT="${CORE_DIR}/splyrics-help.sh"
+CHECKER_COMPILER_SCRIPT="${CORE_DIR}/checker_compiler.sh"
 
 # Function to display help using splyrics-help.sh
 show_help() {
@@ -31,35 +28,34 @@ EOF
     fi
 }
 
-# Function to compile or recompile packages
-compile_packages() {
-    local force_compile=$1
-    chmod +x "$COMPILER_SCRIPT"
-    "$COMPILER_SCRIPT" "$force_compile"
+# Function to install splyrics system-wide using splyrics-installer.sh
+install_systemwide() {
+    chmod +x "$INSTALLER_SCRIPT"
+    sudo "$INSTALLER_SCRIPT"
+    exit 0
 }
 
-# Function to check sptlrx cookie from config
-check_sptlrx_cookie() {
-    local config_file=$1
-    local sptlrx_cookie=$(jq -r '.["sptlrx-cookie"]' "$config_file")
-    if [ -z "$sptlrx_cookie" ]; then
-        echo "Error: --cookie option is required in the sptlrx section of $CONFIG_FILE"
-        echo "Running checksptlrx.sh to handle this issue..."
-        chmod +x "$SCRIPT_DIR/checksptlrx.sh"
-        "$SCRIPT_DIR/checksptlrx.sh"
-        exit 1
-    fi
+# Function to check and compile packages using checker_compiler.sh
+check_and_compile_packages() {
+    chmod +x "$CHECKER_COMPILER_SCRIPT"
+    "$CHECKER_COMPILER_SCRIPT" "$1"
 }
 
-# Flags initialization
-enable_sptlrx=false
-enable_cava=false
-enable_song_info=false
+# Function to handle updates by cloning from GitHub
+update_splyrics() {
+    echo "Updating SpLyrics from GitHub..."
+    git clone https://github.com/ios7jbpro/splyrics /tmp/splyrics_temp
+    rsync -a /tmp/splyrics_temp/ "$(dirname "${BASH_SOURCE[0]}")/" --exclude=splyrics
+    rm -rf /tmp/splyrics_temp
+    echo "SpLyrics updated successfully."
+    exit 0
+}
+
+# Main script logic
 install_systemwide=false
-recompile_packages=false
-update_script=false
+force_compile=false
+update=false
 
-# Parse command line options
 while getopts "hsliweru" opt; do
     case ${opt} in
         h )
@@ -81,13 +77,13 @@ while getopts "hsliweru" opt; do
             exit 0
             ;;
         r )
-            recompile_packages=true
+            force_compile="--force"
             ;;
         w )
             enable_song_info=true
             ;;
         u )
-            update_script=true
+            update=true
             ;;
         \? )
             show_help
@@ -95,6 +91,25 @@ while getopts "hsliweru" opt; do
             ;;
     esac
 done
+
+if $update; then
+    update_splyrics
+fi
+
+if $install_systemwide; then
+    install_systemwide
+fi
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Error: Config file $CONFIG_FILE not found."
+    exit 1
+fi
+
+check_and_compile_packages "$force_compile"
+
+# Continue with the rest of your script logic...
+# Replace or add any necessary functionality here based on your requirements.
+
 
 # Handle script installation system-wide
 if $install_systemwide; then
