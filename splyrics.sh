@@ -16,7 +16,7 @@ show_help() {
     echo "  -l    Enable the sptlrx panel"
     echo "  -i    Install (or update if already installed) the script system-wide"
     echo "  -e    Edit the config file"
-    echo "  -r    Recompile the packages even if they already exist"
+    echo "  -r    Recompile the packages even if they already exist (no script execution)"
 }
 
 create_config() {
@@ -88,25 +88,6 @@ while getopts "hsclier" opt; do
     esac
 done
 
-if [ -f "$CONFIG_FILE" ]; then
-    config_defaults=$(jq -r '.defaults' "$CONFIG_FILE")
-    config_sptlrx=$(jq -r '.sptlrx' "$CONFIG_FILE")
-    check_sptlrx "$CONFIG_FILE"
-else
-    echo "Error: Config file $CONFIG_FILE not found."
-    exit 1
-fi
-
-if [ $OPTIND -eq 1 ]; then
-    for flag in $(echo $config_defaults | sed -e 's/./& /g'); do
-        case "$flag" in
-            s ) enable_cava=true ;;
-            c ) enable_credits=true ;;
-            l ) enable_sptlrx=true ;;
-        esac
-    done
-fi
-
 if $install_systemwide; then
     script_path=$(realpath "$0")
     sudo cp "$script_path" /usr/local/bin/splyrics
@@ -133,6 +114,30 @@ fi
 if $enable_cava && (! command -v cava &> /dev/null || $recompile_packages); then
     echo "cava could not be found or recompilation requested. Trying to compile it..."
     compile_package "cava"
+fi
+
+if $recompile_packages; then
+    echo "Packages recompiled successfully. Use the appropriate flags to run the script."
+    exit 0
+fi
+
+if [ -f "$CONFIG_FILE" ]; then
+    config_defaults=$(jq -r '.defaults' "$CONFIG_FILE")
+    config_sptlrx=$(jq -r '.sptlrx' "$CONFIG_FILE")
+    check_sptlrx "$CONFIG_FILE"
+else
+    echo "Error: Config file $CONFIG_FILE not found."
+    exit 1
+fi
+
+if [ $OPTIND -eq 1 ]; then
+    for flag in $(echo $config_defaults | sed -e 's/./& /g'); do
+        case "$flag" in
+            s ) enable_cava=true ;;
+            c ) enable_credits=true ;;
+            l ) enable_sptlrx=true ;;
+        esac
+    done
 fi
 
 session_name="splyrics_$(date +%s)"
