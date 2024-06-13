@@ -31,7 +31,7 @@ EOF
 # Function to install splyrics system-wide using splyrics-installer.sh
 install_systemwide() {
     chmod +x "$INSTALLER_SCRIPT"
-    sudo "$INSTALLER_SCRIPT"
+    sudo "./$INSTALLER_SCRIPT"
     exit 0
 }
 
