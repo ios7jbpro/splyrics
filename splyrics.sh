@@ -14,6 +14,8 @@ show_help() {
     echo "  -i    Install (or update if already installed) the script system-wide"
 }
 
+# Required Binaries
+required_bins=("tmux" "sptlrx" "spotifycli" "cava")
 # Default values for flags
 enable_sptlrx=false
 enable_cava=false
@@ -56,29 +58,15 @@ if $install_systemwide; then
     exit 0
 fi
 
-# Check if tmux is installed
-if ! command -v tmux &> /dev/null; then
-    echo "tmux could not be found. Please install it first."
-    exit 1
-fi
+### Check if required binaries are installed
 
-# Check if sptlrx is installed if the flag is set
-if $enable_sptlrx && ! command -v sptlrx &> /dev/null; then
-    echo "sptlrx could not be found. Please install it first."
+for x in "${required_bins[@]}" # Expand out the array
+  do
+   if ! (type -p "$x" || type -t "$x") &> /dev/null; then
+    echo "! '$x' could not be found. Please install it first."
     exit 1
-fi
-
-# Check if spotifycli is installed
-if ! command -v spotifycli &> /dev/null; then
-    echo "spotifycli could not be found. Please install it first."
-    exit 1
-fi
-
-# Check if cava is installed if the flag is set
-if $enable_cava && ! command -v cava &> /dev/null; then
-    echo "cava could not be found. Please install it first."
-    exit 1
-fi
+   fi
+  done
 
 # Generate a unique session name using the current timestamp
 session_name="splyrics_$(date +%s)"
