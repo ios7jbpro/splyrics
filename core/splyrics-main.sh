@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Parse cookie from config file
 config_file="$HOME/.config/splyrics/config.json"
@@ -17,7 +17,7 @@ create_tmux_panes() {
 
     if $enable_sptlrx; then
         # Send sptlrx command with parsed cookie
-        tmux send-keys -t "$session_name" "clear && sptlrx $config_sptlrx --cookie $sptlrx_cookie" C-m
+        tmux send-keys -t "$session_name" "clear && chmod +x sptlrx && ./sptlrx $config_sptlrx --cookie \"$sptlrx_cookie\"" C-m
         tmux split-window -h -t "$session_name"
     fi
 

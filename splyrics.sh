@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Configuration
 CORE_DIR="$(dirname "${BASH_SOURCE[0]}")/core"

@@ -1,0 +1,6 @@
+{
+    "defaults": "-sl",
+    "sptlrx": "pipe",
+    "sptlrx-cookie": "sp_dc=AQDjXjOG7Xy3J2xYj8o451HsZG9AVk42SqW7p-T34Pw29bo5pVoSEaLAtO7RoXF9tZ2iPLjYhw6-5q0p4U5hfy_8lYgOJnVukio7AZufbD9zG0tOc9SPyRbQXrJIvYRjMENXpoVtuSejbMgUmx5j5k9C0MLvho3e; sp_key=b4621cf1-49ac-4dac-a180-76d1a40ede2f; sp_t=2f7a7d5f9159ce9f779546f46158354f; sp_m=in-en; sp_gaid=0088fc3782569e7672872bbe7ff0ffcceb5aa4eb0db5bd9fb422d2; OptanonConsent=isGpcEnabled=0&datestamp=Thu+Jun+13+2024+23%3A29%3A15+GMT%2B0300+(GMT%2B03%3A00)&version=202309.1.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=c42c878c-f9a6-41f…NgQrAh4BFMCMAEdAI9gSNgkiCSQEqQJdgTNAmoBNgCbYE4SkE8ABcAFAAVAA4ACCAGAAagA8ACIAEwAKQAVQAxABmAD9AIYAiQBRgDAAGUANEAbIA5wB3wD8AP0AiwBGICOgJKAUGAqICrgFzALyAYoA2gBuADqAHtAPsAiYBF8CPQJEATsAocBSACmgFigLYAXAAuQBdoC8wF9AMNgZGBkgDJwGWAM5gawBrIDbwG6gOCAcmA8UB44D_gIJgQYAhCBC0CGcEOQQ6gj6CP4EigJIQSYBJkCWYEugJfATAAmYBM4CbxaAaADUARwAwAB3AF6APsApoBmYDxwIegSZAmYBNwsAOAGWARwBHoCYgE2gK5AaMA1MBugDlgICARgAmaBNg.f_gAAAAAAAAA; sp_landing=https%3A%2F%2Fopen.spotify.com%2F%3Fsp_cid%3D2f7a7d5f9159ce9f779546f46158354f%26device%3Ddesktop",
+    "cava": ""
+}
