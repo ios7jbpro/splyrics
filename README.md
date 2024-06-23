@@ -1,5 +1,7 @@
 # splyrics
 A bundled script that displays controls for Spotify alongside eyecandy
+![preview](https://raw.githubusercontent.com/ios7jbpro/splyrics/main/image.png)
+
 
 ## Disclaimer
 You OBVIOUSLY need a Spotify premium account to use this.
