@@ -2,7 +2,31 @@
 A bundled script that displays controls for Spotify alongside eyecandy
 ![preview](https://raw.githubusercontent.com/ios7jbpro/splyrics/main/image.png)
 
+# WARNING
+The main script so called "splyrics.sh" is now deprecated since I can't be arsed to code anymore. New script has been extremely modularized and written with ChatGPT. Sorry.
 
+It is **HIGHLY** recommended that you use splyrics-beta.sh instead, since it's more bug-free and modularized.
+
+You need to read only this part of the script if you want to have a basic window, like in the screenshot. No need to go through old README part.
+
+## Dependencies
+https://github.com/karlstav/cava
+
+https://github.com/pwittchen/spotify-cli-linux
+
+sptlrx(a binary is included and used, don't install)
+
+## Installation
+```
+git clone https://github.com/ios7jbpro/splyrics
+cd splyrics
+chmod +x splyrics-beta.sh
+./splyrics-beta.sh
+./splyrics-beta.sh install(optional, to install user-wide)
+```
+The new script does not have the flexible flags(yet).
+
+## Old README
 ## Disclaimer
 You OBVIOUSLY need a Spotify premium account to use this.
 
