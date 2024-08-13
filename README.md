@@ -28,6 +28,7 @@ You can also use old versions of this script. They are included in the folder "d
 -i    Enable the info pane
 -v    Enable the visualiser pane
 -c    Enable the controls pane
+-q    Shows version and changelogs
 ```
 
 ## Example usage

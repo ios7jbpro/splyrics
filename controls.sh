@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 # Directly run spotifycli
-spotifycli
+spotifycli --play && spotifycli
 
