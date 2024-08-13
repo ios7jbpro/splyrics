@@ -29,6 +29,8 @@ You can also use old versions of this script. They are included in the folder "d
 -v    Enable the visualiser pane
 -c    Enable the controls pane
 -q    Shows version and changelogs
+-s    Skips data initialization and package installation
+Run -h in the script for more options
 ```
 
 ## Example usage
